@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("TG_BOT_TOKEN")
+FB_API_KEY = os.getenv("FUSION_API_KEY")
+FB_SECRET_KEY = os.getenv("FUSION_SECRET_KEY")
+
 if not TOKEN:
     raise ValueError("Ошибка: переменная окружения TG_BOT_TOKEN не установлена! Укажите TG_BOT_TOKEN в .env файле.")
 

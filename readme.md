@@ -43,4 +43,4 @@
 ## 🛠 Технологии
 - Python 3.10+
 - python-telegram-bot v20+
-- pathlib, dotenv, random
+- pathlib, dotenv, fusionbrain-sdk-python, random
