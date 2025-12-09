@@ -7,11 +7,12 @@ from handlers.greeting import greet_new_member
 from handlers.pig import pig
 from handlers.generate_pig import generate_pig
 from handlers.errors import error_handler
-
+from handlers.snout import snout_handler
 
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
+    app.add_handler(snout_handler)
     # Команды
     app.add_handler(CommandHandler("start", start))
     app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.MY_CHAT_MEMBER))
