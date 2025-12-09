@@ -21,7 +21,7 @@ def add_snouts_to_faces(image_bytes, snouts_folder):
     
     gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
     
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=3, minSize=(30, 30))
 
     if len(faces) == 0:
         return None
@@ -40,7 +40,7 @@ def add_snouts_to_faces(image_bytes, snouts_folder):
         snout_path = os.path.join(snouts_folder, snout_name)
         snout_img = Image.open(snout_path).convert("RGBA")
 
-        scale_factor = 0.4 
+        scale_factor = 0.3 
         new_snout_width = int(face_width * scale_factor)
         
         aspect_ratio = snout_img.height / snout_img.width

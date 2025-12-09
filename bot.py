@@ -18,7 +18,7 @@ def main():
     app.add_handler(ChatMemberHandler(welcome_bot, ChatMemberHandler.MY_CHAT_MEMBER))
     app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, greet_new_member))
     app.add_handler(CommandHandler("pig", pig))
-    app.add_handler(CommandHandler("generate_pig", generate_pig))
+    app.add_handler(CommandHandler("generate_pig", generate_pig, block=False))
 
     # Ошибки
     app.add_error_handler(error_handler)
