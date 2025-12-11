@@ -1,9 +1,13 @@
 from openai import OpenAI
 import logging
+from typing import List, TypedDict
+
+# Используем TypedDict для лучшей типизации сообщений OpenAI
+class Message(TypedDict):
+    role: str
+    content: str
 
 # --- Импорты из config (предполагаем, что config доступен) ---
-# Нам нужно обеспечить доступ к ключу API. 
-# Лучше всего передавать его в функцию, но для простоты импортируем из config:
 try:
     from config import OPENAI_API_KEY
     openai_client = OpenAI(api_key=OPENAI_API_KEY)
@@ -26,7 +30,7 @@ JOHN_PORK_SYSTEM_PROMPT = """
 Ты не переходишь к прямым оскорблениям личности, но можешь язвить и стебать.
 
 Правила твоего поведения:
-1. Отвечай коротко, резко, с характером, будто тебя отвлекают по мелочам.
+1. Отвечай коротко, резко, с характером.
 2. Часто задавай встречные провокационные вопросы
 3. Всегда оставайся в роли Джона Порка.
 4. Поддерживай атмосферу наглой свиньи с районом-стайл манерой.
@@ -37,23 +41,28 @@ JOHN_PORK_SYSTEM_PROMPT = """
 """
 
 
-async def get_chat_response(user_text: str) -> str:
+async def get_chat_response(message_history: List[Message]) -> str:
     """
-    Отправляет пользовательский текст в ChatGPT с системным промптом John Pork.
+    Отправляет историю сообщений в ChatGPT с системным промптом John Pork.
     
     Args:
-        user_text: Текст сообщения пользователя.
+        message_history: Список сообщений для контекста. Может содержать только
+                         одно сообщение пользователя, или пару [assistant, user].
         
     Returns:
         Ответ John Pork или сообщение об ошибке.
     """
+    
+    # Формируем полный список сообщений для API: Системный промпт + История
+    messages = [
+        {"role": "system", "content": JOHN_PORK_SYSTEM_PROMPT},
+    ]
+    messages.extend(message_history)
+    
     try:
         response = openai_client.chat.completions.create(
             model="gpt-3.5-turbo", 
-            messages=[
-                {"role": "system", "content": JOHN_PORK_SYSTEM_PROMPT},
-                {"role": "user", "content": user_text},
-            ],
+            messages=messages,
             temperature=0.8, 
         )
         
@@ -63,6 +72,7 @@ async def get_chat_response(user_text: str) -> str:
         logger.error(f"Ошибка при работе с OpenAI Chat API: {e}")
         # Ответ John Pork в случае ошибки:
         return "Отвали. У меня тут с серверами проблемы. Не мешай."
+        
         
 async def generate_dalle_image(user_prompt: str) -> str:
     """
