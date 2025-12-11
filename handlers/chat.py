@@ -1,28 +1,51 @@
+import logging
+import re
 from telegram import Update
 from telegram.ext import ContextTypes
-import logging
 from utils.openai_api import get_chat_response 
 
 logger = logging.getLogger(__name__)
 
-BOT_USERNAME = "@iamjohnpork_bot" 
+BOT_USERNAME = "@iamjohnpork_bot"
 
-JOHN_PORK_KEYWORDS = [
-    "джон", "джо", "эй джо", "привет джон", "свин", "свинья", BOT_USERNAME
+# Базовые ключевые слова для Джона Порка
+BASE_KEYWORDS = [
+    "джон", "джо", "привет джон",
+    "свин", "свинья", "порк", "хрюк"
 ]
 
+# Генератор паттернов с возможными удлинениями и уменьшительно-ласкательными формами
+def generate_patterns(keywords):
+    patterns = []
+    for kw in keywords:
+        # Заменяем каждую гласную на повторяемую группу (1 или более раз)
+        kw_pattern = re.sub(r"[аоиеуыэяюё]", r"[аоиеуыэяюё]+", kw)
+        # Добавляем слои для суффиксов и уменьшительных форм
+        pattern = r"(^|\s|,|!|-)" + kw_pattern + r"(\w*|\s|,|!|$)"
+        patterns.append(pattern)
+    return patterns
+
+KEYWORD_PATTERNS = generate_patterns(BASE_KEYWORDS)
+
 def is_addressed_to_john_pork(text: str) -> bool:
-    """Проверяет, обращаются ли к боту John Pork."""
+    """Проверяет, обращаются ли к боту John Pork, учитывая сленг, удлинения и опечатки."""
     if not text:
         return False
     
-    text_lower = text.lower()
+    text_lower = text.lower().strip()
     
-    for keyword in JOHN_PORK_KEYWORDS:
-        if text_lower.startswith(keyword.lower()):
+    # Прямое упоминание юзернейма
+    if BOT_USERNAME.lower() in text_lower:
+        return True
+    
+    # Проверяем все паттерны
+    for pattern in KEYWORD_PATTERNS:
+        if re.search(pattern, text_lower):
             return True
-            
+    
     return False
+
+
 
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

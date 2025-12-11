@@ -15,10 +15,11 @@ async def start_generate_pig(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     # John Pork просит описание в своей манере
     await update.message.reply_text(
-        "О, тебе нужна картинка? Хорошо. "
-        "Только не вздумай присылать мне всякий мусор. "
-        "**Пришли мне текст, описывающий свинью, которую ты хочешь получить.** "
-        "И давай быстрее, я занят."
+        "Что, <b>опять</b> тебе картинка нужна? "
+        "Ладно, давай. Но если пришлёшь мне какой-нибудь мусор, отвечать не буду. "
+        "Говори уже, <b>что за свинью ты там себе надумал</b>. "
+        "Давай быстрее, не задерживай тут очередь, мне не до тебя.",
+        parse_mode="HTML"
     )
     
     # Переходим в состояние ожидания промпта
@@ -33,12 +34,12 @@ async def generate_pig_image(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     if not user_prompt:
         # Если пришел не текст, просим повторить
-        await update.message.reply_text("Я сказал ТЕКСТ. Не трать мое время. Пришли мне описание!")
+        await update.message.reply_text("Я сказал <b>ТЕКСТ</b>! Ты что, читать не умеешь? Хватит мне всякую ерунду слать. <b>Давай нормальное описание!</b>", parse_mode="HTML")
         return AWAITING_PROMPT 
 
     # John Pork показывает, что он "думает"
     await context.bot.send_chat_action(chat_id=chat_id, action="upload_photo")
-    await update.message.reply_text("Хм... Посмотрим, что я могу для тебя сделать. Жди.")
+    await update.message.reply_text("Хммм... Ладно. Сейчас посмотрим, что можно выжать из твоей ерунды. Сиди и не дергайся.")
 
     # --- Вызов утилиты для генерации ---
     image_url = await generate_dalle_image(user_prompt)
@@ -48,12 +49,13 @@ async def generate_pig_image(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await context.bot.send_photo(
             chat_id=chat_id,
             photo=image_url,
-            caption="Держи. Это, конечно, не шедевр, но для тебя сойдет."
+            caption="На, подавись. Не говори, что я тебе ничего не сделал. И не вздумай мне жаловаться, если оно кривое."
         )
     else:
         # Ответ в случае ошибки (пришел из utils/openai_api.py)
         await update.message.reply_text(
-            "Тут какая-то ерунда с картинками. Не удивлен, ты даже описание нормально дать не можешь. Попробуй позже."
+            "Что-то у тебя там криво пошло. Ожидаемо. Скорее всего, ты что-то не то написал. Попробуй еще, но в следующий раз <b>думай, что печатаешь</b>.",
+            parse_mode="HTML"
         )
 
     # Завершаем разговор
@@ -62,7 +64,7 @@ async def generate_pig_image(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def cancel_generate_pig(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Обработчик для команды /cancel в процессе генерации."""
-    await update.message.reply_text("Скучно. Ладно, отменил. Когда повзрослеешь, приходи.")
+    await update.message.reply_text("Что, слился? Я так и думал. Вали отсюда. Когда решишь, что тебе <b>действительно</b> надо, тогда и вернешься.", parse_mode="HTML")
     return ConversationHandler.END
 
 
