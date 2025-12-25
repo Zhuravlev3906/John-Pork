@@ -22,8 +22,8 @@ def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
     # --- Генерация свиньи ---
-    app.add_handler(get_generate_pig_handler())
-    app.add_handler(get_regenerate_callback_handler())
+    # app.add_handler(get_generate_pig_handler())
+    # app.add_handler(get_regenerate_callback_handler())
 
     # --- Редактирование свиньи ---
     app.add_handler(get_edit_pig_handler())

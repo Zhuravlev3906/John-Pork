@@ -38,8 +38,8 @@ async def swap_face_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
     await update.message.reply_text(
-        "📸 Пришли фото человека.\n"
-        "Я заменю его лицо на свинское 🐷"
+        "📸 Ну давай, скидывай фотку\n"
+        "Сделаю ее более престижной"
     )
     return WAITING_FOR_PHOTO
 
@@ -89,7 +89,7 @@ async def receive_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌ Слишком долго. Попробуй позже.")
     except Exception as e:
         logger.exception("Ошибка swap_face")
-        await update.message.reply_text(f"❌ Ошибка:\n{e}")
+        await update.message.reply_text(f"❌ Тут какие-то проблемки. Потом зайди, добро?")
 
     return ConversationHandler.END
 
@@ -110,4 +110,5 @@ def get_swap_face_handler() -> ConversationHandler:
             ]
         },
         fallbacks=[CommandHandler("cancel", cancel_swap)],
+        block=False
     )

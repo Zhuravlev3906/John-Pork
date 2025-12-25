@@ -59,6 +59,7 @@ async def receive_edit_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE
     prompt = update.message.text
     d_prompt = (
         "Главное правило: Сохрани морду свинки, глаза, пятачок, прическу и узнаваемый характер\n"
+        "Свинью зовут Джон Порк\n"
         f"Вот запрос пользователя: {prompt}"
     )
 
@@ -80,7 +81,7 @@ async def receive_edit_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE
         await update.message.reply_text("❌ Слишком долго. Попробуй ещё раз позже.")
     except Exception as e:
         logger.exception("Ошибка edit_pig")
-        await update.message.reply_text(f"❌ Ошибка:\n{e}")
+        await update.message.reply_text(f"❌ Тут наладочка получилась... Зайди позже, по рукам?")
 
     return ConversationHandler.END
 
@@ -99,4 +100,5 @@ def get_edit_pig_handler() -> ConversationHandler:
             ]
         },
         fallbacks=[CommandHandler("cancel", cancel_edit)],
+        block=False
     )
