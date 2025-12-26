@@ -19,17 +19,18 @@ from config import PROXYAPI_API_KEY
 
 from PIL import Image, ImageDraw, ImageFont
 
+from handlers.chat import group_button  # 👈 кнопка группы
+
 
 logger = logging.getLogger(__name__)
 
 # ---------- CONFIG ----------
 WAITING_FOR_PHOTO = 1
 PIG_IMAGE_PATH = "pig.jpg"
-WATERMARK_TEXT = "@johnporkonton"  # <-- ЗАМЕНИ
+WATERMARK_TEXT = "@johnporkonton"
 # ---------------------------
 
 
-# --- ProxyAPI client ---
 openai_client = OpenAI(
     api_key=PROXYAPI_API_KEY,
     base_url="https://api.proxyapi.ru/openai/v1",
@@ -43,7 +44,6 @@ def add_watermark(
     opacity: int = 120,
     margin: int = 20,
 ) -> bytes:
-    """Добавляет полупрозрачный watermark в правый нижний угол"""
     base_image = Image.open(BytesIO(image_bytes)).convert("RGBA")
 
     txt_layer = Image.new("RGBA", base_image.size, (255, 255, 255, 0))
@@ -79,12 +79,9 @@ def add_watermark(
 
 # ---------- OPENAI ----------
 def sync_face_swap(human_image_bytes: bytes) -> bytes:
-    """
-    Синхронный вызов ProxyAPI (face swap)
-    """
     with open(PIG_IMAGE_PATH, "rb") as pig_file:
         human_image_file = io.BytesIO(human_image_bytes)
-        human_image_file.name = "human.jpg"  # критично для MIME-типа
+        human_image_file.name = "human.jpg"
 
         result = openai_client.images.edit(
             model="gpt-image-1",
@@ -101,7 +98,6 @@ def sync_face_swap(human_image_bytes: bytes) -> bytes:
 
 # ---------- HANDLERS ----------
 async def swap_face_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Старт команды /swap_face"""
     if not os.path.exists(PIG_IMAGE_PATH):
         await update.message.reply_text("❌ Файл pig.jpg не найден.")
         return ConversationHandler.END
@@ -115,7 +111,6 @@ async def swap_face_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def receive_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Принимаем фото и запускаем face swap"""
     try:
         photo = update.message.photo[-1]
         await update.message.reply_text("⏳ Меняю морду...")
@@ -137,6 +132,7 @@ async def receive_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_photo(
             photo=image_bytes,
             caption="🐷 Готово. Теперь он один из нас.",
+            reply_markup=group_button(),  # 👈 ВСЕГДА
         )
 
     except asyncio.TimeoutError:
@@ -149,13 +145,11 @@ async def receive_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def cancel_swap(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Отмена команды"""
     await update.message.reply_text("❌ Ладно, отменили.")
     return ConversationHandler.END
 
 
 def get_swap_face_handler() -> ConversationHandler:
-    """Регистрация ConversationHandler"""
     return ConversationHandler(
         entry_points=[CommandHandler("swap_face", swap_face_start)],
         states={

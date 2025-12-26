@@ -18,11 +18,13 @@ from config import PROXYAPI_API_KEY
 
 from PIL import Image, ImageDraw, ImageFont
 
+from handlers.chat import group_button  # 👈 кнопка группы
+
 
 # ---------- CONFIG ----------
 WAITING_FOR_PROMPT = 1
 IMAGE_PATH = "pig.jpg"
-WATERMARK_TEXT = "@johnporkonton"  # <-- ЗАМЕНИ НА СВОЮ ГРУППУ
+WATERMARK_TEXT = "@johnporkonton"
 # ----------------------------
 
 
@@ -41,9 +43,6 @@ def add_watermark(
     opacity: int = 120,
     margin: int = 20,
 ) -> bytes:
-    """
-    Добавляет полупрозрачный watermark в правый нижний угол
-    """
     base_image = Image.open(BytesIO(image_bytes)).convert("RGBA")
 
     txt_layer = Image.new("RGBA", base_image.size, (255, 255, 255, 0))
@@ -79,7 +78,6 @@ def add_watermark(
 
 # ---------- OPENAI ----------
 def sync_generate_image(prompt: str) -> bytes:
-    """Синхронный вызов OpenAI API"""
     with open(IMAGE_PATH, "rb") as image_file:
         result = openai_client.images.edit(
             model="gpt-image-1",
@@ -133,6 +131,7 @@ async def receive_edit_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE
         await update.message.reply_photo(
             photo=image_bytes,
             caption="🐷 Готово. Любуйся.",
+            reply_markup=group_button(),  # 👈 ВСЕГДА
         )
 
     except asyncio.TimeoutError:
@@ -158,6 +157,6 @@ def get_edit_pig_handler() -> ConversationHandler:
             ]
         },
         fallbacks=[CommandHandler("cancel", cancel_edit)],
-        block=False,        # 🔥 НЕ БЛОКИРУЕТ БОТА
+        block=False,
         allow_reentry=True,
     )

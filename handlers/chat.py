@@ -63,7 +63,7 @@ def should_show_group(context: ContextTypes.DEFAULT_TYPE) -> bool:
     """
     count = context.user_data.get("group_hint_count", 0) + 1
     context.user_data["group_hint_count"] = count
-    return count % 6 == 0
+    return count % 3 == 0
 
 
 def group_button():
