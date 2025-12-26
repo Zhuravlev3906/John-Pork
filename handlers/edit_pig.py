@@ -43,7 +43,7 @@ def add_watermark(image_bytes: bytes, text: str, opacity: int = 120) -> bytes:
     width, height = base_image.size
     base = min(width, height)
 
-    font_size = int(base * 0.045)
+    font_size = int(base * 0.06)
     margin = int(base * 0.035)
 
     txt_layer = Image.new("RGBA", base_image.size, (255, 255, 255, 0))
