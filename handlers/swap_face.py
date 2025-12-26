@@ -13,137 +13,136 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+from telegram.constants import ParseMode
 
 from openai import OpenAI
 from config import PROXYAPI_API_KEY
-
 from PIL import Image, ImageDraw, ImageFont
-
 from handlers.chat import group_button
-
+from utils.decorators import rate_limit
 
 logger = logging.getLogger(__name__)
 
-# ---------- CONFIG ----------
+# --- CONFIG ---
 WAITING_FOR_PHOTO = 1
 PIG_IMAGE_PATH = "pig.jpg"
 WATERMARK_TEXT = "@johnporkonton"
-# ---------------------------
 
-
-openai_client = OpenAI(
+client = OpenAI(
     api_key=PROXYAPI_API_KEY,
     base_url="https://api.proxyapi.ru/openai/v1",
 )
 
-
-# ---------- WATERMARK ----------
-def add_watermark(image_bytes: bytes, text: str, opacity: int = 120) -> bytes:
-    base_image = Image.open(BytesIO(image_bytes)).convert("RGBA")
-
-    width, height = base_image.size
-    base = min(width, height)
-
-    font_size = int(base * 0.06)
-    margin = int(base * 0.035)
-
-    txt_layer = Image.new("RGBA", base_image.size, (255, 255, 255, 0))
-    draw = ImageDraw.Draw(txt_layer)
-
+def add_watermark(image_bytes: bytes, text: str) -> bytes:
+    """
+    Накладывает ватермарку с автоматическим подбором шрифта.
+    """
     try:
-        font = ImageFont.truetype("arial.ttf", font_size)
-    except IOError:
-        font = ImageFont.load_default()
+        base_image = Image.open(BytesIO(image_bytes)).convert("RGBA")
+        txt_layer = Image.new("RGBA", base_image.size, (255, 255, 255, 0))
+        draw = ImageDraw.Draw(txt_layer)
 
-    text_bbox = draw.textbbox((0, 0), text, font=font)
-    text_width = text_bbox[2] - text_bbox[0]
-    text_height = text_bbox[3] - text_bbox[1]
+        width, height = base_image.size
+        font_size = int(min(width, height) * 0.06)
+        
+        font_paths = [
+            "arial.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/TTF/DejaVuSans.ttf"
+        ]
+        
+        font = None
+        for path in font_paths:
+            try:
+                font = ImageFont.truetype(path, font_size)
+                break
+            except IOError:
+                continue
+        
+        if not font:
+            font = ImageFont.load_default()
 
-    x = width - text_width - margin
-    y = height - text_height - margin
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        margin = int(min(width, height) * 0.035)
+        x = width - (text_bbox[2] - text_bbox[0]) - margin
+        y = height - (text_bbox[3] - text_bbox[1]) - margin
 
-    draw.text(
-        (x, y),
-        text,
-        fill=(255, 255, 255, opacity),
-        font=font,
-    )
+        draw.text((x, y), text, fill=(255, 255, 255, 120), font=font)
+        
+        result = Image.alpha_composite(base_image, txt_layer)
+        output = BytesIO()
+        result.convert("RGB").save(output, format="JPEG", quality=95)
+        return output.getvalue()
+    except Exception as e:
+        logger.error(f"Watermark error in swap_face: {e}")
+        return image_bytes
 
-    result = Image.alpha_composite(base_image, txt_layer)
-    output = BytesIO()
-    result.convert("RGB").save(output, format="JPEG", quality=95)
-
-    return output.getvalue()
-
-
-# ---------- OPENAI ----------
 def sync_face_swap(human_image_bytes: bytes) -> bytes:
+    """
+    Синхронный вызов API для замены лица.
+    """
     with open(PIG_IMAGE_PATH, "rb") as pig_file:
-        human_image_file = io.BytesIO(human_image_bytes)
-        human_image_file.name = "human.jpg"
+        human_file = io.BytesIO(human_image_bytes)
+        human_file.name = "human.jpg"
 
-        result = openai_client.images.edit(
+        response = client.images.edit(
             model="gpt-image-1",
-            image=[pig_file, human_image_file],
-            prompt="Replace the human face with the pig face",
+            image=[pig_file, human_file],
+            prompt="Replace the human face with the pig face accurately",
             size="1024x1024",
+            quality="medium"
         )
+    return base64.b64decode(response.data[0].b64_json)
 
-    return base64.b64decode(result.data[0].b64_json)
-
-
-# ---------- HANDLERS ----------
+@rate_limit(seconds=30)
 async def swap_face_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not os.path.exists(PIG_IMAGE_PATH):
-        await update.message.reply_text("❌ Файл pig.jpg не найден.")
+        logger.error(f"Файл {PIG_IMAGE_PATH} не найден!")
+        await update.message.reply_text("❌ Ошибка: Шхаблон свиньи отсутствует.")
         return ConversationHandler.END
 
     await update.message.reply_text(
-        "📸 Ну давай, скидывай фотку\n"
-        "Сделаю её более престижной 🐷"
+        "📸 Скидывай фотку человека. Сейчас сделаю его солидным свинтусом 🐷"
     )
-
     return WAITING_FOR_PHOTO
 
-
 async def receive_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message.photo:
+        await update.message.reply_text("Это не фото. Пришли картинку!")
+        return WAITING_FOR_PHOTO
+
     try:
+        # Берем самое качественное фото
         photo = update.message.photo[-1]
-        await update.message.reply_text("⏳ Меняю морду...")
+        await update.message.reply_text("⏳ Снимаю мерки с лица...")
 
         file = await photo.get_file()
-        human_image_bytes = bytes(await file.download_as_bytearray())
+        photo_bytes = bytes(await file.download_as_bytearray())
 
-        image_bytes = await asyncio.wait_for(
-            asyncio.to_thread(sync_face_swap, human_image_bytes),
-            timeout=90,
+        # Обработка в потоке
+        result_bytes = await asyncio.wait_for(
+            asyncio.to_thread(sync_face_swap, photo_bytes),
+            timeout=90
         )
-
-        image_bytes = await asyncio.to_thread(
-            add_watermark,
-            image_bytes,
-            WATERMARK_TEXT,
-        )
+        
+        final_image = await asyncio.to_thread(add_watermark, result_bytes, WATERMARK_TEXT)
 
         await update.message.reply_photo(
-            photo=image_bytes,
+            photo=final_image,
             caption="🐷 Готово. Теперь он один из нас.",
-            reply_markup=group_button(),
+            reply_markup=group_button()
         )
-
     except asyncio.TimeoutError:
-        await update.message.reply_text("❌ Слишком долго. Попробуй позже.")
-    except Exception:
-        logger.exception("Ошибка swap_face")
-        await update.message.reply_text("❌ Тут какие-то проблемки. Потом зайди, добро?")
+        await update.message.reply_text("❌ Слишком долго. API не отвечает.")
+    except Exception as e:
+        logger.error(f"Swap face error: {e}", exc_info=True)
+        await update.message.reply_text("❌ Что-то пошло не так. Попробуй другое фото.")
 
     return ConversationHandler.END
-
 
 async def cancel_swap(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("❌ Ладно, отменили.")
+    await update.message.reply_text("❌ Отмена.")
     return ConversationHandler.END
-
 
 def get_swap_face_handler() -> ConversationHandler:
     return ConversationHandler(
@@ -154,6 +153,5 @@ def get_swap_face_handler() -> ConversationHandler:
             ]
         },
         fallbacks=[CommandHandler("cancel", cancel_swap)],
-        block=False,
-        allow_reentry=True,
+        block=False
     )
