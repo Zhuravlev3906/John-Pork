@@ -18,7 +18,7 @@ from config import PROXYAPI_API_KEY
 
 from PIL import Image, ImageDraw, ImageFont
 
-from handlers.chat import group_button  # 👈 кнопка группы
+from handlers.chat import group_button
 
 
 # ---------- CONFIG ----------
@@ -37,18 +37,17 @@ logger = logging.getLogger(__name__)
 
 
 # ---------- WATERMARK ----------
-def add_watermark(
-    image_bytes: bytes,
-    text: str,
-    opacity: int = 120,
-    margin: int = 20,
-) -> bytes:
+def add_watermark(image_bytes: bytes, text: str, opacity: int = 120) -> bytes:
     base_image = Image.open(BytesIO(image_bytes)).convert("RGBA")
+
+    width, height = base_image.size
+    base = min(width, height)
+
+    font_size = int(base * 0.045)
+    margin = int(base * 0.035)
 
     txt_layer = Image.new("RGBA", base_image.size, (255, 255, 255, 0))
     draw = ImageDraw.Draw(txt_layer)
-
-    font_size = max(24, base_image.size[0] // 30)
 
     try:
         font = ImageFont.truetype("arial.ttf", font_size)
@@ -59,8 +58,8 @@ def add_watermark(
     text_width = text_bbox[2] - text_bbox[0]
     text_height = text_bbox[3] - text_bbox[1]
 
-    x = base_image.size[0] - text_width - margin
-    y = base_image.size[1] - text_height - margin
+    x = width - text_width - margin
+    y = height - text_height - margin
 
     draw.text(
         (x, y),
@@ -131,7 +130,7 @@ async def receive_edit_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE
         await update.message.reply_photo(
             photo=image_bytes,
             caption="🐷 Готово. Любуйся.",
-            reply_markup=group_button(),  # 👈 ВСЕГДА
+            reply_markup=group_button(),
         )
 
     except asyncio.TimeoutError:
