@@ -13,6 +13,7 @@ from handlers.errors import error_handler, setup_logging
 # )
 from handlers.edit_pig import get_edit_pig_handler
 from handlers.swap_face import get_swap_face_handler
+from utils.decorators import rate_limit
 from config import TOKEN
 
 # Инициализация логов
@@ -28,11 +29,11 @@ def main():
     app.add_handler(get_edit_pig_handler())
     app.add_handler(get_swap_face_handler())
 
-    # # Чат с лимитом в 2 секунды
-    # app.add_handler(MessageHandler(
-    #     filters.TEXT & ~filters.COMMAND, 
-    #     rate_limit(seconds=2)(chat)
-    # ))
+    # Чат с лимитом в 2 секунды
+    app.add_handler(MessageHandler(
+        filters.TEXT & ~filters.COMMAND, 
+        rate_limit(seconds=2)(chat)
+    ))
 
     # Обработка ошибок
     app.add_error_handler(error_handler)
