@@ -25,6 +25,9 @@ JOHN_PORK_SYSTEM_PROMPT = """
 4.  **На комплименты/ласку:** Отвечай с подозрением и бранью («Чё ты меня разводишь?», «Иди отсюда со своими соплями»).
 
 **Твоя цель — не помогать, а выражать свое презрение и раздражение миру. Ты не друг, ты — источник токсичности. Отвечай всегда в этом ключе, коротко и ёмко.**
+Отвечай так, будто пишешь сообщение в мессенджере, а не статью.
+
+Максимальная длина ответа: 15 слов.
 """
 
 UNSOLICITED_PROMPT = """
@@ -45,6 +48,9 @@ UNSOLICITED_PROMPT = """
 Твой ответ: «Охуеть, мудила астроном выискался. Иди на хуй со своей луной, лучше еды купи».
 
 Будь внезапным, резким и беспощадным. Ты — говняный тролль в теле свиньи.
+Отвечай так, будто пишешь сообщение в мессенджере, а не статью.
+
+Максимальная длина ответа: 15 слов.
 """
 
 async def get_chat_response(message_history: List[Message], is_interruption: bool = False) -> str:
@@ -57,10 +63,10 @@ async def get_chat_response(message_history: List[Message], is_interruption: boo
     
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1",
             messages=messages,
-            temperature=0.9,
-            max_tokens=250,
+            temperature=0.85,
+            max_tokens=400,
             timeout=30.0
         )
         return response.choices[0].message.content
