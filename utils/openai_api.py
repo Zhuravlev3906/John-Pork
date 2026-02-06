@@ -96,8 +96,13 @@ async def get_chat_response(message_history: List[Message], is_interruption: boo
 
 async def generate_dalle_image(user_prompt: str) -> Optional[str]:
     full_prompt = (
-        f"High-quality 3D render of John Pork (a humanoid pig character). "
-        f"Scenario: {user_prompt}. Cinematic lighting, detailed textures."
+        f"Высококачественный 3D-рендер персонажа 'Джон Порк' (гуманоидная свинья) в стиле дерзкого гопника. "
+        f"Сценарий: {user_prompt}. "
+        f"Кинематографическое освещение, детализированные текстуры, реалистичные материалы. "
+        f"Стиль: дизайн персонажа для видеоигры, профессиональное 3D-моделирование, рендер в Blender/Octane. "
+        f"ВАЖНО: НИКАКОГО ТЕКСТА, НИКАКИХ СЛОВ, НИКАКИХ БУКВ, НАДПИСЕЙ ИЛИ ЛОГОТИПОВ на изображении. "
+        f"ЗАДАЧА: Полностью визуально преобразовать изображение в соответствии с описанием, а не добавлять элементы поверх. "
+        f"Фокус на художественной интерпретации персонажа."
     )
     
     try:
