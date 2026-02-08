@@ -22,8 +22,7 @@ REGEN_PREFIX = "regen_pig_"
 @rate_limit(seconds=30)
 async def start_generate_pig(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
-        "Что, <b>опять</b> тебе картинка нужна? Ладно, давай описание. "
-        "Только не задерживай очередь, мне не до тебя.",
+        "О, опять работы подвалило. Ну давай, скидывай описание, только быстро, у меня другие лохи в очереди.",
         parse_mode=ParseMode.HTML
     )
     return AWAITING_PROMPT
@@ -34,7 +33,7 @@ async def generate_pig_image(update: Update, context: ContextTypes.DEFAULT_TYPE)
     if update.message:
         user_prompt = update.message.text
         if not user_prompt:
-            await update.message.reply_text("Я сказал <b>ТЕКСТ</b>! Давай нормальное описание.", parse_mode=ParseMode.HTML)
+            await update.message.reply_text("Я сказал <b>ТЕКСТ</b>, ёбаный ты рот! Это буквы должны быть, а не твоё мычание!", parse_mode=ParseMode.HTML)
             return AWAITING_PROMPT
     elif update.callback_query:
         user_prompt = context.user_data.get('current_pig_prompt')
@@ -47,7 +46,7 @@ async def generate_pig_image(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
     
     if update.message:
-        await update.message.reply_text("Хммм... Сейчас посмотрим, что можно выжать из твоей ерунды.")
+        await update.message.reply_text("Ладно, щас попробую из этого дерьма конфетку сделать.")
 
     # Генерация уникального ключа для кнопки
     prompt_key = f"{REGEN_PREFIX}{uuid.uuid4().hex[:8]}"
@@ -62,18 +61,18 @@ async def generate_pig_image(update: Update, context: ContextTypes.DEFAULT_TYPE)
             await context.bot.send_photo(
                 chat_id=chat_id,
                 photo=image_url,
-                caption="На, подавись. Не вздумай мне жаловаться, если оно кривое.",
+                caption="На, держи. Я — художник, я так вижу. Возражения принимаются в мусорку",
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         else:
             await context.bot.send_message(
                 chat_id=chat_id,
-                text="Что-то у тебя там криво пошло. Скорее всего, ты ерунду написал.",
+                text="Бля, ну и хуйню ты написал. Из этого даже я ничего путного не выжму.",
                 parse_mode=ParseMode.HTML
             )
     except Exception as e:
         logger.error(f"Error in generate_pig_image: {e}", exc_info=True)
-        await context.bot.send_message(chat_id, "❌ Ошибка генерации. Попробуй позже.")
+        await context.bot.send_message(chat_id, "❌ Всё упало. Не трогай. Позже, может, заработает.")
 
     return ConversationHandler.END if update.message else None
 
@@ -85,17 +84,17 @@ async def regenerate_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     if user_prompt:
         await query.edit_message_caption(
-            caption=f"Понял, переделываю: <i>{user_prompt[:40]}...</i>\n<b>🔄 Генерирую...</b>",
+            caption=f"Щас. <i>{user_prompt[:40]}...</i>\n<b>🔄 Делаю, отъебись.</b>",
             parse_mode=ParseMode.HTML
         )
         await generate_pig_image(update, context)
         # Очистка старого ключа для экономии памяти
         context.user_data.pop(query.data, None)
     else:
-        await query.edit_message_caption(caption="Я забыл, что ты просил. Начни заново: /generate_pig")
+        await query.edit_message_caption(caption="Забудь. Просто введи /generate_pig")
 
 async def cancel_generate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Что, слился? Я так и думал.", parse_mode=ParseMode.HTML)
+    await update.message.reply_text("Да, слился. Ты и не стоил моего внимания.", parse_mode=ParseMode.HTML)
     return ConversationHandler.END
 
 def get_generate_pig_handler() -> ConversationHandler:
