@@ -98,29 +98,23 @@ def sync_face_swap(human_image_bytes: bytes) -> bytes:
 async def swap_face_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not os.path.exists(PIG_IMAGE_PATH):
         logger.error(f"Файл {PIG_IMAGE_PATH} не найден!")
-        await update.message.reply_text(
-            "че, фото мое пропало. видать свиньи в тг его стащили."
-        )
+        await update.message.reply_text("❌ Чё за уродское лицо? Даже мой шаблон его не переварил.")
         return ConversationHandler.END
 
     await update.message.reply_text(
-        "кидай фото лица, которое нужно улучшить. сделаю из него свинью. или нет, посмотрим."
+        "📸 Кидай сюда лицо того лоха, которого надо опозорить. Ща сделаю из него моего родственника."
     )
     return WAITING_FOR_PHOTO
 
 async def receive_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message.photo:
-        await update.message.reply_text(
-            "че, это не фото. кидай нормальное фото, а не свою кривую картинку."
-        )
+        await update.message.reply_text("Бля, это чё за файл? Мне нужна фотка, а не твои кривые скриншоты.")
         return WAITING_FOR_PHOTO
 
     try:
         # Берем самое качественное фото
         photo = update.message.photo[-1]
-        await update.message.reply_text(
-            "щас посмотрю на это лицо... или что это там у тебя."
-        )
+        await update.message.reply_text("⏳ Щас прикину, как твою рожу лучше в хрюшку превратить...")
 
         file = await photo.get_file()
         photo_bytes = bytes(await file.download_as_bytearray())
@@ -135,25 +129,19 @@ async def receive_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await update.message.reply_photo(
             photo=final_image,
-            caption="готово. теперь это лицо имеет хоть какой-то шарм. можешь выставлять как нфт, если хочешь.",
+            caption="🐷 Всё. Теперь этот чувак — официально свиноуёбок.",
             reply_markup=group_button()
         )
     except asyncio.TimeoutError:
-        await update.message.reply_text(
-            "сервера тупят. может, твое фото слишком сложное для них. попробуй позже."
-        )
+        await update.message.reply_text("❌ Эти тупые сервера сдохли от твоей кринжовой идеи. Позже.")
     except Exception as e:
         logger.error(f"Swap face error: {e}", exc_info=True)
-        await update.message.reply_text(
-            "что-то пошло не так. может, твое фото слишком кривое? попробуй другое."
-        )
+        await update.message.reply_text("❌ Не, с этой кривой фоткой не справиться. Кидай другую, нормальную.")
 
     return ConversationHandler.END
 
 async def cancel_swap(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "отмена. и ладно, мир не готов к еще одной свиноподобной роже."
-    )
+    await update.message.reply_text("❌ Отмена принята. Отъебись.")
     return ConversationHandler.END
 
 def get_swap_face_handler() -> ConversationHandler:

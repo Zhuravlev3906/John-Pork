@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 BOT_USERNAME = "@iamjohnpork_bot"
 MAIN_GROUP_URL = "https://t.me/johnporkonton"
-GROUP_BUTTON_TEXT = "🐷 гони в группу"  # Более дерзкая формулировка
+GROUP_BUTTON_TEXT = "🐷 Заходи, если не ссыкло"
 
 BASE_KEYWORDS = [
     # Русские триггеры
@@ -24,7 +24,7 @@ BASE_KEYWORDS = [
     "dzhon", "pork", "свин pork", "джон pig",
     
     # Игровые/сленговые обращения
-    "хрю", "oink", "porky", "поркач"
+    "хрю", "оink", "porky", "поркач"
 ]
 
 def generate_patterns(keywords):
@@ -95,9 +95,7 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not should_respond:
         return
 
-    # Добавляем кнопку "печатает..." для естественности
     await context.bot.send_chat_action(chat_id=chat_id, action="typing")
-    
     john_pork_response = await get_chat_response(
         message_history=message_history, 
         is_interruption=is_interruption

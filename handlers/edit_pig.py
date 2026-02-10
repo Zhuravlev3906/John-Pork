@@ -95,13 +95,12 @@ def sync_generate_edit(prompt: str) -> bytes:
 async def edit_pig_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not os.path.exists(IMAGE_PATH):
         logger.error(f"Файл {IMAGE_PATH} не найден!")
-        await update.message.reply_text("че, фото мое куда-то подевалось. видать свиньи в тг его съели.")
+        await update.message.reply_text("❌ Ошибка: Исходный файл свиньи потерялся.")
         return ConversationHandler.END
 
     await update.message.reply_text(
-        "ну че, гений, шли свою идею.\n"
-        "типа `свинья в скафандре с кошельком вместо головы`\n\n"
-        "пиши /cancel если ты не уверен в себе",
+        "Ну давай, пиши, что хочешь увидеть 👀\n"
+        "Пример: `Свинья в костюме космонавта`",
         parse_mode=ParseMode.MARKDOWN
     )
     return WAITING_FOR_PROMPT
@@ -110,7 +109,7 @@ async def receive_edit_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_prompt = update.message.text
     final_prompt = f"Maintain the pig face and character. Add: {user_prompt}"
     
-    await update.message.reply_text("щас поколдую... если получится кринж - это твои проблемы.")
+    await update.message.reply_text("⏳ Ща поколдую...")
 
     try:
         # Запуск тяжелых операций в отдельном потоке
@@ -123,19 +122,19 @@ async def receive_edit_prompt(update: Update, context: ContextTypes.DEFAULT_TYPE
 
         await update.message.reply_photo(
             photo=processed_image,
-            caption="готово. можешь выставлять как nft, вдруг кто-то купит этого уродца.",
+            caption="🐷 Готово. Любуйся.",
             reply_markup=group_button()
         )
     except asyncio.TimeoutError:
-        await update.message.reply_text("ой, сервера опять тупят. попробуй позже, если не передумал.")
+        await update.message.reply_text("❌ Слишком долго. API OpenAI тормозит.")
     except Exception as e:
         logger.error(f"Edit pig error: {e}", exc_info=True)
-        await update.message.reply_text("что-то пошло не так. может, твой запрос был слишком криповым для ии.")
+        await update.message.reply_text("❌ Что-то хрюкнуло не так. Попробуй позже.")
 
     return ConversationHandler.END
 
 async def cancel_edit(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("отмена. ну и ладно, идея была так себе.")
+    await update.message.reply_text("❌ Отмена операции.")
     return ConversationHandler.END
 
 def get_edit_pig_handler() -> ConversationHandler:
