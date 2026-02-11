@@ -77,15 +77,19 @@ def add_watermark(image_bytes: bytes, text: str) -> bytes:
         logger.error(f"Watermark error: {e}")
         return image_bytes
 
-def sync_generate_edit(prompt: str) -> bytes:
+def sync_generate_edit(user_prompt: str) -> bytes:
     """
     Синхронный вызов API для редактирования изображения.
     """
     with open(IMAGE_PATH, "rb") as f:
+        full_instruction = (
+            "NO TEXT. NO LETTERS. NO WORDS. NO CAPTIONS. "
+            f"Modification details: {user_prompt}. "
+        )
         response = client.images.edit(
             model="gpt-image-1",
             image=f,
-            prompt=prompt,
+            prompt=full_instruction,
             size="1024x1024",
             quality="medium"
         )
